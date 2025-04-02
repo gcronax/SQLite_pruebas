@@ -22,7 +22,7 @@ public class tablasrefactorizado {
     private static JFrame frameInsertar = null;
     private static JFrame frameEliminar = null;
     private static JFrame frameActualizar = null;
-    public static Object cambiante;
+    public static Object[] cambiante;
     private static final String URL = "jdbc:sqlite:skateshop.db";
 
 
@@ -71,6 +71,7 @@ public class tablasrefactorizado {
 
             JButton btninsertar = new JButton("insertar");
             btninsertar.addActionListener(e -> {
+                queryData(0,true);
                 insertData();
                 frameSubMenu.setVisible(false);
             });
@@ -80,6 +81,7 @@ public class tablasrefactorizado {
 
             JButton btneliminar = new JButton("eliminar");
             btneliminar.addActionListener(e -> {
+                queryData(0,true);
                 deleteData();
                 frameSubMenu.setVisible(false);
             });
@@ -89,6 +91,7 @@ public class tablasrefactorizado {
 
             JButton btnactualizar = new JButton("actualizar");
             btnactualizar.addActionListener(e -> {
+                queryData(0,true);
                 updateData();
                 frameSubMenu.setVisible(false);
             });
@@ -98,6 +101,9 @@ public class tablasrefactorizado {
 
             JButton btnsalir = new JButton("salir");
             btnsalir.addActionListener(e -> {
+                if (frameConsulta!=null){
+                    frameConsulta.dispose();
+                }
                 frameSubMenu.dispose();
                 main.frameMenu.setVisible(true);
             });
@@ -172,10 +178,15 @@ public class tablasrefactorizado {
                     queryData(tableHeader.columnAtPoint(e.getPoint()), click[0]);
                 }
             });
-
+            cambiante=new Object[columnCount];
+            for (int i=0; i<columnCount;i++){
+                cambiante[i]=table.getValueAt(0, i);
+            }
             table.getSelectionModel().addListSelectionListener(e ->{
-                cambiante= table.getValueAt(table.getSelectedRow(),0);
-
+                cambiante=new Object[columnCount];
+                for (int i=0; i<columnCount;i++){
+                    cambiante[i]=table.getValueAt(table.getSelectedRow(), i);
+                }
             });
 
         } catch (Exception e) {
@@ -350,14 +361,15 @@ public class tablasrefactorizado {
         JTextField textField = new JTextField(20);
         textField.setMaximumSize(new Dimension(400,30));// Campo de texto
         if (cambiante!=null){
-            textField.setText(String.valueOf(cambiante));
+            textField.setText(String.valueOf(cambiante[0]));
+
         }
         Timer timer = new Timer(500, new ActionListener() {
             private Object ultimoValor = cambiante;
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (cambiante != ultimoValor) { // Solo actualiza si cambió
-                    textField.setText(String.valueOf(cambiante));
+                    textField.setText(String.valueOf(cambiante[0]));
                     ultimoValor = cambiante;
                 }
             }
@@ -434,35 +446,44 @@ public class tablasrefactorizado {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         JTextField textFieldid = new JTextField(20);
         textFieldid.setMaximumSize(new Dimension(400,20));
-        if (cambiante!=null){
-            textFieldid.setText(String.valueOf(cambiante));
-        }
-        Timer timer = new Timer(500, new ActionListener() {
-            private Object ultimoValor = cambiante;
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (cambiante != ultimoValor) { // Solo actualiza si cambió
-                    textFieldid.setText(String.valueOf(cambiante));
-                    ultimoValor = cambiante;
-                }
-            }
-        });
-        timer.start();
+        ArrayList<JTextField> textFields=new ArrayList<>();
         JLabel labelid = new JLabel("Ingrese el ID del " + entityName);
         panel.add(labelid);
         panel.add(textFieldid);
-
-        ArrayList<JTextField> textFields=new ArrayList<>();
-
         for (int i = 1; i < headers.length; i++) {
             JTextField textField = new JTextField(20);
             textField.setMaximumSize(new Dimension(400,20));
-
             textFields.add(textField);
             JLabel label = new JLabel("Ingrese " + headers[i]);
             panel.add(label);
             panel.add(textField);
         }
+
+        if (cambiante!=null){
+            textFieldid.setText(String.valueOf(cambiante[0]));
+            for (int i = 0; i < textFields.size(); i++) {
+                textFields.get(i).setText(String.valueOf(cambiante[i+1]));
+            }
+        }
+        Timer timer = new Timer(500, new ActionListener() {
+            private Object ultimoValor = cambiante;
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try{
+                    if (cambiante != ultimoValor) {
+                        textFieldid.setText(String.valueOf(cambiante[0]));
+                        for (int i = 0; i < textFields.size(); i++) {
+                            textFields.get(i).setText(String.valueOf(cambiante[i+1]));
+                        }
+                        ultimoValor = cambiante;
+                    }
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+        timer.start();
+
 
         panel.add(Box.createVerticalStrut(10)); // Espacio entre componentes
         JButton btnactualizar = new JButton("actualizar");
@@ -477,6 +498,7 @@ public class tablasrefactorizado {
                         }
                         i++;
                     }
+                    timer.stop();
                 }catch (Exception es) {
                     System.out.println("Error al actualizar el " + entityName + ": " + es.getMessage());
                 }
@@ -493,6 +515,7 @@ public class tablasrefactorizado {
         btncancelar.addActionListener(e -> {
             frameSubMenu.setVisible(true);
             frameActualizar.dispose();
+            timer.stop();
         });
         panel.add(btncancelar);
         //panel.setLayout( new BoxLayout(panel,BoxLayout.Y_AXIS));
