@@ -71,7 +71,6 @@ public class tablasrefactorizado {
 
             JButton btninsertar = new JButton("insertar");
             btninsertar.addActionListener(e -> {
-                queryData(0,true);
                 insertData();
                 frameSubMenu.setVisible(false);
             });
@@ -81,7 +80,6 @@ public class tablasrefactorizado {
 
             JButton btneliminar = new JButton("eliminar");
             btneliminar.addActionListener(e -> {
-                queryData(0,true);
                 deleteData();
                 frameSubMenu.setVisible(false);
             });
@@ -91,7 +89,6 @@ public class tablasrefactorizado {
 
             JButton btnactualizar = new JButton("actualizar");
             btnactualizar.addActionListener(e -> {
-                queryData(0,true);
                 updateData();
                 frameSubMenu.setVisible(false);
             });
@@ -104,6 +101,7 @@ public class tablasrefactorizado {
                 if (frameConsulta!=null){
                     frameConsulta.dispose();
                 }
+                cambiante=null;
                 frameSubMenu.dispose();
                 main.frameMenu.setVisible(true);
             });
@@ -178,9 +176,11 @@ public class tablasrefactorizado {
                     queryData(tableHeader.columnAtPoint(e.getPoint()), click[0]);
                 }
             });
-            cambiante=new Object[columnCount];
-            for (int i=0; i<columnCount;i++){
-                cambiante[i]=table.getValueAt(0, i);
+            if (cambiante==null){
+                cambiante=new Object[columnCount];
+                for (int i=0; i<columnCount;i++){
+                    cambiante[i]=table.getValueAt(0, i);
+                }
             }
             table.getSelectionModel().addListSelectionListener(e ->{
                 cambiante=new Object[columnCount];
@@ -368,10 +368,13 @@ public class tablasrefactorizado {
             private Object ultimoValor = cambiante;
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (cambiante != ultimoValor) { // Solo actualiza si cambió
-                    textField.setText(String.valueOf(cambiante[0]));
-                    ultimoValor = cambiante;
+                if (cambiante!=null){
+                    if (cambiante != ultimoValor) { // Solo actualiza si cambió
+                        textField.setText(String.valueOf(cambiante[0]));
+                        ultimoValor = cambiante;
+                    }
                 }
+
             }
         });
         timer.start();
